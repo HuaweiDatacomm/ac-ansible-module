@@ -1,0 +1,56 @@
+---
+# ansible-playbook endport_create.yml -e 'logicport_id="1d802944-8172-4aa3-b453-4e2588ba3225" logicnetwork_id="eda7f8aa-1199-4eb0-b676-f4cc2226a959" endport_name="eport1" endport_desc="eport1 test"'
+
+- name: Create EndPort
+  hosts: localhost
+  serial: True
+  vars_files:
+  tasks:
+    - name: check endport_name is null
+      fail:
+        msg: "Create EndPort fail! endport_name is null"
+      when: endport_name == ''
+    - name: check logicnetwork_id is null
+      fail:
+        msg: "Create EndPort fail! logicnetwork_id is null"
+      when: logicnetwork_id == ''
+    - name: check logicport_id is null
+      fail:
+        msg: "Create EndPort fail! logicport_id is null"
+      when: logicport_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get endport id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: endport_id
+    - name: Create endport {{endport_name}}({{endport_id.uuid}})
+      tags: create_endport
+      vars:
+        endport_info:
+          endPort:
+            id: "{{endport_id.uuid}}"
+            name: "{{endport_name}}"
+            description: "{{endport_desc}}"
+            logicNetworkId: "{{logicnetwork_id}}"
+            logicPortId: "{{logicport_id}}"
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/endports'
+        method: POST
+        body: '{{endport_info}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: endport_result
+    - name: response from create end port {{endport_name}}({{endport_id.uuid}})
+      debug:
+        msg: "{{endport_result}}"

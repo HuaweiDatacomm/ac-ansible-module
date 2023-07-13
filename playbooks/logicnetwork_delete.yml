@@ -1,0 +1,35 @@
+---
+# ansible-playbook logicnetwork_delete.yml -e 'logicnetwork_id="880d30d5-ae52-480e-92b5-70a268cfcaca"'
+
+- name: Delete LogicNetwork
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicnetwork_id is null
+      fail:
+        msg: "Delete LogicNetwork fail! logicnetwork_id is null"
+      when: logicnetwork_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Delete logicnetwork "{{logicnetwork_id}}"
+      tags: delete_logicnetwork
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/networks/network/{{logicnetwork_id}}'
+        method: DELETE
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicnetwork_result
+      ignore_errors: yes
+    - name: response from delete a logicnetwork
+      debug:
+        msg: "{{logicnetwork_result}}"

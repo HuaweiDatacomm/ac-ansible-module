@@ -1,0 +1,35 @@
+---
+# ansible-playbook tenant_delete.yml -e 'tenant_id="3945d892-544f-4093-95f6-43aef6af0a26"'
+
+- name: Delete Tenant
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check tenant_id is null
+      fail:
+        msg: "Delete Tenant fail! tenant_id is null"
+      when: tenant_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Delete tenant "{{tenant_id}}"
+      tags: delete_tenant
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/tenants/tenant/{{tenant_id}}'
+        method: DELETE
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: tenant_result
+      ignore_errors: yes
+    - name: response from delete a tenant
+      debug:
+        msg: "{{tenant_result}}"

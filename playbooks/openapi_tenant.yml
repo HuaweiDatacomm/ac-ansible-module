@@ -1,0 +1,70 @@
+---
+# ansible-playbook openapi_tenant.yml -e 'tenant_name="tenant1" fabric_id="ef52de44-9839-4b61-bf1f-8823c033defe" tenant_desc="desc"'
+
+- name: Create Tenant
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check tenant_name is null
+      fail:
+        msg: "Create Tenant fail! tenant_name is null"
+      when: tenant_name == ''
+    - name: fabric_id is null
+      fail:
+        msg: "Create Tenant fail! fabric_id is null"
+      when: fabric_id == ''
+    - name: Get tenant id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: tenant_id
+    - name: Create tenant {{tenant_name}}({{tenant_id.uuid}})
+      tags: create_tenant
+      vars:
+        tenant_info:
+          id: "{{tenant_id.uuid}}"
+          name: "{{tenant_name}}"
+          description: "{{tenant_desc}}"
+          producer: "default"
+          resPool:
+            fabricIds: [ "{{fabric_id}}" ]
+        tenant_infos:
+          tenant: [ "{{tenant_info}}" ]
+      huaweidatacom.nce_fabric.nce_fabric_openapi:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+        url: "/controller/dc/v3/tenants"
+        method: POST
+        body: '{{tenant_infos}}'
+    - name: Update tenant {{tenant_name}}({{tenant_id.uuid}})
+      tags: update_tenant
+      huaweidatacom.nce_fabric.nce_fabric_openapi:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+        url: "/controller/dc/v3/tenants/tenant/{{tenant_id.uuid}}"
+        method: PUT
+        body: "{\"tenant\": [{\"id\": \"{{tenant_id.uuid}}\", \"name\": \"{{tenant_name}}\", \"description\": \"{{tenant_desc}}\", \"producer\": \"default\", \"resPool\": {\"fabricIds\": [\"{{fabric_id}}\"]}}]}"
+    - name: Query tenant {{tenant_name}}({{tenant_id.uuid}})
+      tags: query_tenant
+      huaweidatacom.nce_fabric.nce_fabric_openapi:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+        url: "/controller/dc/v3/tenants/tenant/{{tenant_id.uuid}}"
+        method: GET
+      register: tenant_result
+    - name: response from query tenant {{tenant_name}}({{tenant_id.uuid}})
+      debug:
+        msg: "{{tenant_result}}"
+    - name: Delete tenant {{tenant_name}}({{tenant_id.uuid}})
+      tags: delete_tenant
+      huaweidatacom.nce_fabric.nce_fabric_openapi:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+        url: "/controller/dc/v3/tenants/tenant/{{tenant_id.uuid}}"
+        method: DELETE

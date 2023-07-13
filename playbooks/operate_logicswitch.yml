@@ -1,0 +1,57 @@
+---
+# ansible-playbook operate_logicswitch.yml
+
+- name: Operate Logicswitch
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicswitch
+      huaweidatacom.nce_fabric.nce_fabric_logicswitch:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicswitch: switch1
+        description: switch1 description
+        logicnetwork: vpc1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicswitch
+      huaweidatacom.nce_fabric.nce_fabric_logicswitch:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicswitch: switch1
+        logicnetwork: vpc1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all logicswitchs
+      huaweidatacom.nce_fabric.nce_fabric_logicswitch:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicswitch
+      huaweidatacom.nce_fabric.nce_fabric_logicswitch:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicswitch: switch1
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

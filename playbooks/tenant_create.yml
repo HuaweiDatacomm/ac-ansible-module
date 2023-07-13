@@ -1,0 +1,52 @@
+---
+# ansible-playbook tenant_create.yml -e 'tenant_name="tenant1" fabric_id="ef52de44-9839-4b61-bf1f-8823c033defe" tenant_desc="desc"'
+
+- name: Create Tenant
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check tenant_name is null
+      fail:
+        msg: "Create Tenant fail! tenant_name is null"
+      when: tenant_name == ''
+    - name: fabric_id is null
+      fail:
+        msg: "Create Tenant fail! fabric_id is null"
+      when: fabric_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get tenant id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: tenant_id
+    - name: Create tenant {{tenant_name}}({{tenant_id.uuid}})
+      tags: create_tenant
+      vars:
+        tenant_info:
+          id: "{{tenant_id.uuid}}"
+          name: "{{tenant_name}}"
+          description: "{{tenant_desc}}"
+          resPool:
+            fabricIds: ["{{fabric_id}}"]
+        tenant_infos:
+          tenant: ["{{tenant_info}}"]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/tenants'
+        method: POST
+        body: '{{tenant_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: tenant_result
+    - name: response from create tenant {{tenant_name}}({{tenant_id.uuid}})
+      debug:
+        msg: "{{tenant_result}}"

@@ -1,0 +1,58 @@
+---
+# ansible-playbook operate_endport.yml
+
+- name: Operate Endport
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new endport
+      huaweidatacom.nce_fabric.nce_fabric_endport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        endport: endport1
+        description: description endport1
+        logicport: port1
+        logicswitch: switch1
+        logicnetwork: vpc1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a endport
+      huaweidatacom.nce_fabric.nce_fabric_endport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        endport: endport1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all endports
+      huaweidatacom.nce_fabric.nce_fabric_endport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old endport
+      huaweidatacom.nce_fabric.nce_fabric_endport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        endport: endport1
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

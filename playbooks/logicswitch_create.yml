@@ -1,0 +1,51 @@
+---
+# ansible-playbook logicswitch_create.yml -e 'logicnetwork_id="eda7f8aa-1199-4eb0-b676-f4cc2226a959" logicswitch_name="lswitch1" logicswitch_desc="lswitch1 test"'
+
+- name: Create LogicSwitch
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicswitch_name is null
+      fail:
+        msg: "Create LogicSwitch fail! logicswitch_name is null"
+      when: logicswitch_name == ''
+    - name: check logicnetwork_id is null
+      fail:
+        msg: "Create LogicSwitch fail! logicnetwork_id is null"
+      when: logicnetwork_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get logicswitch id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: logicswitch_id
+    - name: Create logicswitch {{logicswitch_name}}({{logicswitch_id.uuid}})
+      tags: create_logicswitch
+      vars:
+        logicswitch_info:
+          id: "{{logicswitch_id.uuid}}"
+          name: "{{logicswitch_name}}"
+          description: "{{logicswitch_desc}}"
+          logicNetworkId: "{{logicnetwork_id}}"
+        logicswitch_infos:
+          switch: [ "{{logicswitch_info}}" ]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/switchs'
+        method: POST
+        body: '{{logicswitch_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicswitch_result
+    - name: response from create logic switch {{logicswitch_name}}({{logicswitch_id.uuid}})
+      debug:
+        msg: "{{logicswitch_result}}"

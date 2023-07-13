@@ -1,0 +1,47 @@
+---
+# ansible-playbook logicnetwork_update.yml -e 'logicnetwork_id="880d30d5-ae52-480e-92b5-70a268cfcaca" logicnetwork_name="vpc1" logicnetwork_desc="desc update"'
+
+- name: Update LogicNetwork
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicnetwork_id is null
+      fail:
+        msg: "Update LogicNetwork fail! logicnetwork_id is null"
+      when: logicnetwork_id == ''
+    - name: check logicnetwork_name is null
+      fail:
+        msg: "Update LogicNetwork fail! logicnetwork_name is null"
+      when: logicnetwork_name == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Update logic network "{{logicnetwork_id}}"
+      tags: update_logicnetwork
+      vars:
+        logicnetwork_info:
+          network:
+            id: "{{logicnetwork_id}}"
+            name: "{{logicnetwork_name}}"
+            description: "{{logicnetwork_desc}}"
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/networks/network/{{logicnetwork_id}}'
+        method: PUT
+        body: '{{logicnetwork_info}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicnetwork_result
+      ignore_errors: yes
+    - name: response from update a logic network
+      debug:
+        msg: "{{logicnetwork_result}}"

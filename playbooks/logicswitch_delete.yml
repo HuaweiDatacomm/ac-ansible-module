@@ -1,0 +1,35 @@
+---
+# ansible-playbook logicswitch_delete.yml -e 'logicswitch_id="63f7cab2-b621-4ada-8751-713843b8141b"'
+
+- name: Delete LogicSwitch
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicswitch_id is null
+      fail:
+        msg: "Delete LogicSwitch fail! logicswitch_id is null"
+      when: logicswitch_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Delete logicswitch "{{logicswitch_id}}"
+      tags: delete_logicswitch
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/switchs/switch/{{logicswitch_id}}'
+        method: DELETE
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicswitch_result
+      ignore_errors: yes
+    - name: response from delete a logicswitch
+      debug:
+        msg: "{{logicswitch_result}}"

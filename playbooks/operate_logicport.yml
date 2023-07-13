@@ -1,0 +1,61 @@
+---
+# ansible-playbook operate_logicport.yml
+
+- name: Operate Logicport
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicport
+      huaweidatacom.nce_fabric.nce_fabric_logicport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicport: port1
+        description: description port1
+        logicswitch: switch1
+        logicnetwork: vpc1
+        device_ip: 1.1.1.1
+        port_name: 25GE1/0/36
+        vlan: 3212
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicport
+      huaweidatacom.nce_fabric.nce_fabric_logicport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicport: port1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all logicports
+      huaweidatacom.nce_fabric.nce_fabric_logicport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicport
+      huaweidatacom.nce_fabric.nce_fabric_logicport:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicport: port1
+        logicswitch: switch1
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

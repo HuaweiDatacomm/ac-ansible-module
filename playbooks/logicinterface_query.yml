@@ -1,0 +1,53 @@
+---
+# ansible-playbook logicinterface_query.yml -e 'logicinterface_id="c977f047-91fe-41a4-af3c-de3b62d646e3"'
+# ansible-playbook logicinterface_query.yml -e 'logicinterface_id=""'
+
+- name: Query LogicInterface
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: qeury logicinterfaces
+      tags: qeury_logicinterfaces
+      when: logicinterface_id == ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/interfaces'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicinterfaces_result
+      ignore_errors: yes
+    - name: qeury logicinterface "{{logicinterface_id}}"
+      tags: qeury_logicinterface
+      when: logicinterface_id != ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/interfaces/interface/{{logicinterface_id}}'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicinterface_result
+      ignore_errors: yes
+    - name: response from get logicinterfaces
+      when: logicinterface_id == ''
+      debug:
+        msg: "{{logicinterfaces_result.json.interface}}"
+    - name: response from query a logicinterface
+      when: logicinterface_id != ''
+      debug:
+        msg: "{{logicinterface_result.json.interface}}"

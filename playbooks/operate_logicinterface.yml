@@ -1,0 +1,59 @@
+---
+# ansible-playbook operate_logicinterface.yml
+
+- name: Operate Logicinterface
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicinterface
+      huaweidatacom.nce_fabric.nce_fabric_logicinterface:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicinterface: interface1
+        logicrouter: router1
+        cidrs: [1.1.1.0/24]
+        logicswitch: switch1
+        logicnetwork: vpc1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicinterface
+      huaweidatacom.nce_fabric.nce_fabric_logicinterface:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicinterface: interface1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all logicinterfaces
+      huaweidatacom.nce_fabric.nce_fabric_logicinterface:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicinterface
+      huaweidatacom.nce_fabric.nce_fabric_logicinterface:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicinterface: interface1
+        logicrouter: router1
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

@@ -1,0 +1,55 @@
+---
+# ansible-playbook logicnetwork_create.yml -e 'logicnetwork_name="vpc1" tenant_id="7fdc2e53-ad25-4ac3-b9b1-5d37ccf76aba" fabric_id="ef52de44-9839-4b61-bf1f-8823c033defe" logicnetwork_desc="desc"'
+
+- name: Create LogicNetwork
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicnetwork_name is null
+      fail:
+        msg: "Create LogicNetwork fail! logicnetwork_name is null"
+      when: logicnetwork_name == ''
+    - name: check tenant_id is null
+      fail:
+        msg: "Create LogicNetwork fail! tenant_id is null"
+      when: tenant_id == ''
+    - name: check fabric_id is null
+      fail:
+        msg: "Create LogicNetwork fail! fabric_id is null"
+      when: fabric_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get logicnetwork id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: logicnetwork_id
+    - name: Create logic network {{logicnetwork_name}}({{logicnetwork_id.uuid}})
+      tags: create_logicnetwork
+      vars:
+        logicnetwork_info:
+          network:
+            id: "{{logicnetwork_id.uuid}}"
+            name: "{{logicnetwork_name}}"
+            description: "{{logicnetwork_desc}}"
+            tenantId: "{{tenant_id}}"
+            fabricId: ["{{fabric_id}}"]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/networks'
+        method: POST
+        body: '{{logicnetwork_info}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicnetwork_result
+    - name: response from create logic network {{logicnetwork_name}}({{logicnetwork_id.uuid}})
+      debug:
+        msg: "{{logicnetwork_result}}"

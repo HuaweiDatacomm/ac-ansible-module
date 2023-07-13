@@ -1,0 +1,53 @@
+---
+# ansible-playbook logicsubnet_query.yml -e 'logicsubnet_id="39bd00b2-db4e-41fb-b852-125a3d2b91f6"'
+# ansible-playbook logicsubnet_query.yml -e 'logicsubnet_id=""'
+
+- name: Query LogicSubnet
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: qeury logicsubnets
+      tags: qeury_logicsubnets
+      when: logicsubnet_id == ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/subnets'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicsubnets_result
+      ignore_errors: yes
+    - name: qeury logicsubnet "{{logicsubnet_id}}"
+      tags: qeury_logicsubnet
+      when: logicsubnet_id != ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/subnets/subnet/{{logicsubnet_id}}'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicsubnet_result
+      ignore_errors: yes
+    - name: response from get logicsubnets
+      when: logicsubnet_id == ''
+      debug:
+        msg: "{{logicsubnets_result.json.subnet}}"
+    - name: response from query a logicsubnet
+      when: logicsubnet_id != ''
+      debug:
+        msg: "{{logicsubnet_result.json.subnet}}"

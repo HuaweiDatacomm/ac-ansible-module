@@ -1,0 +1,59 @@
+---
+# ansible-playbook operate_logicsubnet.yml
+
+- name: Operate Logicsubnet
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicsubnet
+      huaweidatacom.nce_fabric.nce_fabric_logicsubnet:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        cidr: 1.1.1.0/24
+        gateway_ip: 1.1.1.1
+        logicnetwork: vpc1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicsubnet
+      huaweidatacom.nce_fabric.nce_fabric_logicsubnet:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        logicnetwork: vpc1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all logicsubnets
+      huaweidatacom.nce_fabric.nce_fabric_logicsubnet:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicsubnet
+      huaweidatacom.nce_fabric.nce_fabric_logicsubnet:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        logicnetwork: vpc1
+        cidr: 1.1.1.0/24
+        operation: delete
+      delegate_to: localhost

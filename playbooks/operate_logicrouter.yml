@@ -1,0 +1,58 @@
+---
+# ansible-playbook operate_logicrouter.yml
+
+- name: Operate Logicrouter
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicrouter
+      huaweidatacom.nce_fabric.nce_fabric_logicrouter:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        description: router1 description
+        fabric: fabric1
+        logicnetwork: vpc1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicrouter
+      huaweidatacom.nce_fabric.nce_fabric_logicrouter:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        logicnetwork: vpc1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Query all logicrouters
+      huaweidatacom.nce_fabric.nce_fabric_logicrouter:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicrouter
+      huaweidatacom.nce_fabric.nce_fabric_logicrouter:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicrouter: router1
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

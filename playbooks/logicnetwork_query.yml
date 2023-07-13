@@ -1,0 +1,53 @@
+---
+# ansible-playbook logicnetwork_query.yml -e 'logicnetwork_id="880d30d5-ae52-480e-92b5-70a268cfcaca"'
+# ansible-playbook logicnetwork_query.yml -e 'logicnetwork_id=""'
+
+- name: Query LogicNetwork
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: qeury logicnetworks
+      tags: qeury_logicnetworks
+      when: logicnetwork_id == ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/networks'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicnetworks_result
+      ignore_errors: yes
+    - name: qeury logicnetwork "{{logicnetwork_id}}"
+      tags: qeury_logicnetwork
+      when: logicnetwork_id != ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/networks/network/{{logicnetwork_id}}'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicnetwork_result
+      ignore_errors: yes
+    - name: response from get logicnetworks
+      when: logicnetwork_id == ''
+      debug:
+        msg: "{{logicnetworks_result.json.network}}"
+    - name: response from query a logicnetwork
+      when: logicnetwork_id != ''
+      debug:
+        msg: "{{logicnetwork_result.json.network}}"

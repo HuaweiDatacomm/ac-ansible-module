@@ -1,0 +1,53 @@
+---
+# ansible-playbook endport_query.yml -e 'endport_id="6fda840b-5e33-4b72-9a0a-40872f4e2574"'
+# ansible-playbook endport_query.yml -e 'endport_id=""'
+
+- name: Query EndPort
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: qeury endports
+      tags: qeury_endports
+      when: endport_id == ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/endports'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: endports_result
+      ignore_errors: yes
+    - name: qeury endport "{{endport_id}}"
+      tags: qeury_endport
+      when: endport_id != ''
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/endports/endport/{{endport_id}}'
+        method: GET
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: endport_result
+      ignore_errors: yes
+    - name: response from get endports
+      when: endport_id == ''
+      debug:
+        msg: "{{endports_result.json.endPorts}}"
+    - name: response from query a endport
+      when: endport_id != ''
+      debug:
+        msg: "{{endport_result.json.endPort}}"

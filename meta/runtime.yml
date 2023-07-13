@@ -1,2 +1,13 @@
 ---
 requires_ansible: '>=2.9.10'
+action_groups:
+  all:
+    - nce_fabric_token
+    - nce_fabric_tenant
+    - nce_fabric_logicnetwork
+    - nce_fabric_logicrouter
+    - nce_fabric_logicswitch
+    - nce_fabric_logicport
+    - nce_fabric_logicinterface
+    - nce_fabric_logicsubnet
+    - nce_fabric_endport

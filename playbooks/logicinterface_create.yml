@@ -1,0 +1,62 @@
+---
+# ansible-playbook logicinterface_create.yml -e 'logicrouter_id="7f20f5b9-a34a-45a2-b832-e035437c755f" logicsubnet_id="1e0d6689-fafe-412b-8b9b-3212fec50e9f" logicswitch_id="3620cf6b-c262-47e3-aa02-2b950612c974" logicinterface_name="linterface1"'
+
+- name: Create LogicInterface
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicinterface_name is null
+      fail:
+        msg: "Create LogicInterface fail! logicinterface_name is null"
+      when: logicinterface_name == ''
+    - name: check logicrouter_id is null
+      fail:
+        msg: "Create LogicInterface fail! logicrouter_id is null"
+      when: logicrouter_id == ''
+    - name: check logicswitch_id is null
+      fail:
+        msg: "Create LogicInterface fail! logicswitch_id is null"
+      when: logicswitch_id == ''
+    - name: check logicsubnet_id is null
+      fail:
+        msg: "Create LogicInterface fail! logicsubnet_id is null"
+      when: logicsubnet_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get logicinterface id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: logicinterface_id
+    - name: Create logicinterface {{logicinterface_name}}({{logicinterface_id.uuid}})
+      tags: create_logicinterface
+      vars:
+        logicinterface_info:
+          id: "{{logicinterface_id.uuid}}"
+          name: "{{logicinterface_name}}"
+          interfaceType: "RouterInterface"
+          logicRouterId: "{{logicrouter_id}}"
+          logicSwitchId: "{{logicswitch_id}}"
+          ip:
+            subnetId: "{{logicsubnet_id}}"
+        logicinterface_infos:
+          interface: [ "{{logicinterface_info}}" ]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/interfaces'
+        method: POST
+        body: '{{logicinterface_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicinterface_result
+    - name: response from create logic interface {{logicinterface_name}}({{logicinterface_id.uuid}})
+      debug:
+        msg: "{{logicinterface_result}}"

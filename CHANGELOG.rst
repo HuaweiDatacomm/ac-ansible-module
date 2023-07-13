@@ -1,5 +1,14 @@
-Will be updated by antsibull-changelog. Do not edit this manually!
+==========================================
+HUAWEI iMaster NCE-Fabric Controller Ansible Collection Release Notes
+==========================================
 
-See https://github.com/ansible-community/antsibull-changelog/blob/main/docs/changelogs.rst for information on how to use antsibull-changelog.
+.. contents:: Topics
 
-Check out ``changelogs/config.yaml`` for its configuration. You need to change at least the ``title`` field in there.
+
+v1.0.0
+======
+
+Release Summary
+---------------
+
+This is the first official release of the ``huaweidatacom.nce_fabric`` collection on 2023-7-12.

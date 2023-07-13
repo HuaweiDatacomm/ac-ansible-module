@@ -1,0 +1,67 @@
+---
+# ansible-playbook logicport_create.yml -e 'logicswitch_id="3620cf6b-c262-47e3-aa02-2b950612c974" logicport_name="lport1" logicport_desc="lport1 test" device_ip="1.1.1.1" port_name="25GE1/0/36" vlan=3212'
+
+- name: Create LogicPort
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicport_name is null
+      fail:
+        msg: "Create LogicPort fail! logicport_name is null"
+      when: logicport_name == ''
+    - name: check logicswitch_id is null
+      fail:
+        msg: "Create LogicPort fail! logicswitch_id is null"
+      when: logicswitch_id == ''
+    - name: check device_ip is null
+      fail:
+        msg: "Create LogicPort fail! device_ip is null"
+      when: device_ip == ''
+    - name: check port_name is null
+      fail:
+        msg: "Create LogicPort fail! port_name is null"
+      when: port_name == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get logicport id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: logicport_id
+    - name: Create logicport {{logicport_name}}({{logicport_id.uuid}})
+      tags: create_logicport
+      vars:
+        location_info:
+          deviceIp: "{{device_ip}}"
+          portName: "{{port_name}}"
+        logicport_info:
+          id: "{{logicport_id.uuid}}"
+          name: "{{logicport_name}}"
+          description: "{{logicport_desc}}"
+          logicSwitchId: "{{logicswitch_id}}"
+          accessInfo:
+            mode: "UNI"
+            type: "DOT1Q"
+            vlan: "{{vlan}}"
+            location: [ "{{location_info}}" ]
+        logicport_infos:
+          port: [ '{{logicport_info}}' ]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/ports'
+        method: POST
+        body: '{{logicport_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicport_result
+    - name: response from create logic port {{logicport_name}}({{logicport_id.uuid}})
+      debug:
+        msg: "{{logicport_result}}"

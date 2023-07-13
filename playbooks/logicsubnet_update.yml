@@ -1,0 +1,52 @@
+---
+# ansible-playbook logicsubnet_update.yml -e 'logicsubnet_id="39bd00b2-db4e-41fb-b852-125a3d2b91f6" cidr="1.1.1.0/24" gateway_ip="1.1.1.2"'
+
+- name: Update LogicSubnet
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicsubnet_id is null
+      fail:
+        msg: "Update LogicSubnet fail! logicsubnet_id is null"
+      when: logicsubnet_id == ''
+    - name: check cidr is null
+      fail:
+        msg: "Update LogicSubnet fail! cidr is null"
+      when: cidr == ''
+    - name: check gateway_ip is null
+      fail:
+        msg: "Update LogicSubnet fail! gateway_ip is null"
+      when: gateway_ip == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Update logic subnet "{{logicsubnet_id}}"
+      tags: update_logicsubnet
+      vars:
+        logicsubnet_info:
+          id: "{{logicsubnet_id}}"
+          cidr: "{{cidr}}"
+          gatewayIp: "{{gateway_ip}}"
+        logicsubnet_infos:
+          subnet: [ "{{logicsubnet_info}}" ]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/subnets/subnet/{{logicsubnet_id}}'
+        method: PUT
+        body: '{{logicsubnet_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: logicsubnet_result
+      ignore_errors: yes
+    - name: response from update a logic subnet
+      debug:
+        msg: "{{logicsubnet_result}}"

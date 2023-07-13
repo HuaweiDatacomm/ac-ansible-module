@@ -1,0 +1,48 @@
+---
+# ansible-playbook tenant_update.yml -e 'tenant_id="3945d892-544f-4093-95f6-43aef6af0a26" fabric_id="ef52de44-9839-4b61-bf1f-8823c033defe" tenant_desc="desc update"'
+
+- name: Update Tenant
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check tenant_id is null
+      fail:
+        msg: "Update Tenant fail! tenant_id is null"
+      when: tenant_id == ''
+    - name: check tenant_name is null
+      fail:
+        msg: "Update Tenant fail! tenant_name is null"
+      when: tenant_name == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Update tenant "{{tenant_id}}"
+      tags: update_tenant
+      vars:
+        tenant_info:
+          id: "{{tenant_id}}"
+          name: "{{tenant_name}}"
+          description: "{{tenant_desc}}"
+        tenant_infos:
+          tenant: ["{{tenant_info}}"]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/tenants/tenant/{{tenant_id}}'
+        method: PUT
+        body: '{{tenant_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 200
+      register: tenant_result
+      ignore_errors: yes
+    - name: response from update a tenant
+      debug:
+        msg: "{{tenant_result}}"

@@ -1,0 +1,55 @@
+---
+# ansible-playbook logicsubnet_create.yml -e 'logicrouter_id="7f20f5b9-a34a-45a2-b832-e035437c755f" cidr="1.1.1.0/24" gateway_ip="1.1.1.1"'
+
+- name: Create LogicSubnet
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicrouter_id is null
+      fail:
+        msg: "Create LogicSubnet fail! logicrouter_id is null"
+      when: logicrouter_id == ''
+    - name: check cidr is null
+      fail:
+        msg: "Create LogicSubnet fail! cidr is null"
+      when: cidr == ''
+    - name: check gateway_ip is null
+      fail:
+        msg: "Create LogicSubnet fail! gateway_ip is null"
+      when: gateway_ip == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Get logicsubnet id
+      huaweidatacom.nce_fabric.nce_fabric_uuid:
+      register: logicsubnet_id
+    - name: Create logicsubnet "{{cidr}}" "{{gateway_ip}}"({{logicsubnet_id.uuid}})
+      tags: create_logicsubnet
+      vars:
+        logicsubnet_info:
+          id: "{{logicsubnet_id.uuid}}"
+          cidr: "{{cidr}}"
+          gatewayIp: "{{gateway_ip}}"
+          logicRouterId: "{{logicrouter_id}}"
+        logicsubnet_infos:
+          subnet: [ "{{logicsubnet_info}}" ]
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/subnets'
+        method: POST
+        body: '{{logicsubnet_infos}}'
+        body_format: json
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicsubnet_result
+    - name: response from create logic subnet "{{cidr}}" "{{gateway_ip}}"({{logicsubnet_id.uuid}})
+      debug:
+        msg: "{{logicsubnet_result}}"

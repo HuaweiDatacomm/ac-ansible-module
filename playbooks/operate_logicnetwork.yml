@@ -1,0 +1,69 @@
+---
+# ansible-playbook operate_logicnetwork.yml
+
+- name: Operate Logicnetwork
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new logicnetwork
+      huaweidatacom.nce_fabric.nce_fabric_logicnetwork:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicnetwork: vpc1
+        description: vpc1 description
+        fabrics: [fabric1]
+        tenant: tenant1
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a logicnetwork
+      huaweidatacom.nce_fabric.nce_fabric_logicnetwork:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicnetwork: vpc1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Update a old logicnetwork
+      huaweidatacom.nce_fabric.nce_fabric_logicnetwork:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicnetwork: vpc1
+        description: vpc1 description update
+        fabrics: [fabric1]
+        tenant: tenant1
+        operation: update
+      delegate_to: localhost
+
+    - name: Query all logicnetworks
+      huaweidatacom.nce_fabric.nce_fabric_logicnetwork:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old logicnetwork
+      huaweidatacom.nce_fabric.nce_fabric_logicnetwork:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        logicnetwork: vpc1
+        operation: delete
+      delegate_to: localhost

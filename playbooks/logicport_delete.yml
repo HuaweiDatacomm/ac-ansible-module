@@ -1,0 +1,35 @@
+---
+# ansible-playbook logicport_delete.yml -e 'logicport_id="1960e8ab-d2a2-4a9b-9358-6d02885c10e4"'
+
+- name: Delete LogicPort
+  hosts: localhost
+  serial: True
+  tasks:
+    - name: check logicport_id is null
+      fail:
+        msg: "Delete LogicPort fail! logicport_id is null"
+      when: logicport_id == ''
+    - name: Get token
+      huaweidatacom.nce_fabric.nce_fabric_token:
+        host: "{{ ac_host }}"
+        port: "{{ ac_north_port }}"
+        username: "{{ ac_user }}"
+        password: "{{ ac_passwd }}"
+      register: token
+    - name: Delete logicport "{{logicport_id}}"
+      tags: delete_logicport
+      uri:
+        url: 'https://{{ac_host}}:{{ac_north_port}}/controller/dc/v3/logicnetwork/ports/port/{{logicport_id}}'
+        method: DELETE
+        validate_certs: False
+        return_content: yes
+        headers:
+          X-ACCESS-TOKEN: "{{token.token}}"
+          Accept: application/json
+          Content_Type: application/json
+        status_code: 204
+      register: logicport_result
+      ignore_errors: yes
+    - name: response from delete a logicport
+      debug:
+        msg: "{{logicport_result}}"

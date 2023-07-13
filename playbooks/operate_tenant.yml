@@ -1,0 +1,67 @@
+---
+# ansible-playbook operate_tenant.yml
+
+- name: Operate Tenant
+  hosts: localhost
+  vars:
+    host: "{{ ac_host }}"
+    port: "{{ ac_north_port }}"
+    username: "{{ ac_user }}"
+    password: "{{ ac_passwd }}"
+  tasks:
+    - name: Add a new tenant
+      huaweidatacom.nce_fabric.nce_fabric_tenant:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        tenant: tenant1
+        description: Production test1
+        fabrics: [fabric1]
+        operation: create
+      delegate_to: localhost
+
+    - name: Query a tenant
+      huaweidatacom.nce_fabric.nce_fabric_tenant:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        tenant: tenant1
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Update a old tenant
+      huaweidatacom.nce_fabric.nce_fabric_tenant:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        tenant: tenant1
+        description: Production test5
+        fabrics: [fabric1]
+        operation: update
+      delegate_to: localhost
+
+    - name: Query all tenants
+      huaweidatacom.nce_fabric.nce_fabric_tenant:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        operation: query
+      delegate_to: localhost
+      register: query_result
+    - debug: var=query_result
+
+    - name: Delete a old tenant
+      huaweidatacom.nce_fabric.nce_fabric_tenant:
+        host: "{{ host }}"
+        port: "{{ port }}"
+        username: "{{ username }}"
+        password: "{{ password }}"
+        tenant: tenant1
+        operation: delete
+      delegate_to: localhost
